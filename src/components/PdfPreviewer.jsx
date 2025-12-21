@@ -6,32 +6,28 @@ import { ALL_SAMPLES } from '../data/samplePdfs';
  * PdfPreviewer Component
  * 
  * A React component that allows users to paste Base64 PDF strings and preview them
- * in the same browser tab for a seamless mobile experience.
+ * in a new browser tab.
  * 
  * Features:
  * - Handles both raw Base64 and Data URI format
- * - Opens PDF in the same tab using window.location.replace()
+ * - Opens PDF in new tab using window.open()
  * - Converts Base64 to Blob for memory efficiency
  * - Sample PDFs for quick testing
  * - Error handling with user feedback
  */
 const PdfPreviewer = () => {
   const [base64Input, setBase64Input] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isManualInput, setIsManualInput] = useState(false);
-  const [openInNewTab, setOpenInNewTab] = useState(false);
 
   /**
-   * Handles the PDF preview process by opening in the same tab
+   * Handles the PDF preview process by opening in a new tab
    */
-  const handlePreviewReport = async () => {
+  const handlePreviewReport = () => {
     // Validate input
     if (!base64Input.trim()) {
       alert('Error: Please paste a Base64 PDF string into the textarea.');
       return;
     }
-
-    setIsProcessing(true);
 
     try {
       // Process the Base64 string
@@ -69,38 +65,23 @@ const PdfPreviewer = () => {
         throw new Error('Generated PDF is empty. Please check your Base64 data.');
       }
 
-      // Create Blob URL
+      // Create Blob URL and open in new tab
       const blobUrl = URL.createObjectURL(blob);
-
-      // Open PDF based on toggle setting
-      if (openInNewTab) {
-        // Open in new tab
-        window.open(blobUrl, '_blank');
-        setIsProcessing(false);
-      } else {
-        // Navigate to the PDF in the same tab (preserves history for back button)
-        window.location.href = blobUrl;
-      }
-
-      // Note: Cleanup will happen when user navigates away or closes the tab
-      // The browser will automatically revoke the blob URL
+      window.open(blobUrl, '_blank');
 
     } catch (error) {
       // Show error message
       alert(`Error: ${error.message}`);
-      
       console.error('PDF Preview Error:', error);
-      setIsProcessing(false);
     }
   };
 
   /**
-   * Loads a sample PDF and immediately previews it
+   * Loads a sample PDF and immediately previews it in a new tab
    */
-  const loadSample = async (samplePdf) => {
+  const loadSample = (samplePdf) => {
     setBase64Input(samplePdf.base64);
     setIsManualInput(false); // Mark as not manual input
-    setIsProcessing(true);
 
     try {
       // Process the Base64 string
@@ -133,46 +114,19 @@ const PdfPreviewer = () => {
         throw new Error('Generated PDF is empty. Please check your Base64 data.');
       }
 
-      // Create Blob URL
+      // Create Blob URL and open in new tab
       const blobUrl = URL.createObjectURL(blob);
-
-      // Open PDF based on toggle setting
-      if (openInNewTab) {
-        // Open in new tab
-        window.open(blobUrl, '_blank');
-        setIsProcessing(false);
-      } else {
-        // Navigate to the PDF in the same tab (preserves history for back button)
-        window.location.href = blobUrl;
-      }
+      window.open(blobUrl, '_blank');
 
     } catch (error) {
       // Show error message
       alert(`Error: ${error.message}`);
-      
       console.error('PDF Preview Error:', error);
-      setIsProcessing(false);
     }
   };
 
   return (
     <div className="pdf-previewer">
-      {/* Toggle Button */}
-      <div className="toggle-container">
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={openInNewTab}
-            onChange={(e) => setOpenInNewTab(e.target.checked)}
-            className="toggle-checkbox"
-          />
-          <span className="toggle-switch"></span>
-          <span className="toggle-text">
-            {openInNewTab ? '🗗 New Tab Mode' : '📄 Same Tab Mode'}
-          </span>
-        </label>
-      </div>
-
       <div className="pdf-previewer-content">
         <div className="samples-section">
           <h3 className="samples-title">📚 Try Sample PDFs</h3>
@@ -182,7 +136,6 @@ const PdfPreviewer = () => {
                 key={index}
                 className="sample-button"
                 onClick={() => loadSample(sample)}
-                disabled={isProcessing}
                 title={sample.description}
               >
                 <span className="sample-icon">📄</span>
@@ -205,26 +158,16 @@ const PdfPreviewer = () => {
           }}
           placeholder="Paste your Base64 PDF string here.."
           rows={12}
-          disabled={isProcessing}
         />
 
         {isManualInput && (
           <button
             className="preview-button"
             onClick={handlePreviewReport}
-            disabled={isProcessing || !base64Input.trim()}
+            disabled={!base64Input.trim()}
           >
-            {isProcessing ? (
-              <>
-                <span className="button-spinner"></span>
-                Processing...
-              </>
-            ) : (
-              <>
-                <span className="button-icon">🔍</span>
-                Preview Report
-              </>
-            )}
+            <span className="button-icon">🔍</span>
+            Preview Report
           </button>
         )}
       </div>
