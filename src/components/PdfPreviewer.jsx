@@ -126,7 +126,7 @@ const PdfPreviewer = () => {
       // Step 5: Create Blob URL
       const blobUrl = URL.createObjectURL(blob);
 
-      // Step 6: Render PDF using embed tag (Chrome Android compatible)
+      // Step 6: Render PDF using iframe (better mobile browser compatibility)
       // Clear the loading content and inject the PDF viewer
       proxyTab.document.open();
       proxyTab.document.write(`
@@ -146,7 +146,7 @@ const PdfPreviewer = () => {
                 height: 100%;
                 overflow: hidden;
               }
-              embed {
+              iframe {
                 width: 100%;
                 height: 100%;
                 border: none;
@@ -154,7 +154,7 @@ const PdfPreviewer = () => {
             </style>
           </head>
           <body>
-            <embed src="${blobUrl}" type="application/pdf" />
+            <iframe src="${blobUrl}" type="application/pdf"></iframe>
           </body>
         </html>
       `);
