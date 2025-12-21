@@ -6,13 +6,13 @@ import { ALL_SAMPLES } from '../data/samplePdfs';
  * PdfPreviewer Component
  * 
  * A React component that allows users to paste Base64 PDF strings and preview them
- * using the "Proxy Tab" pattern for mobile browser compatibility.
+ * in the same browser tab for a seamless mobile experience.
  * 
  * Features:
  * - Handles both raw Base64 and Data URI format
- * - Opens PDF in new tab to bypass popup blockers
- * - Converts Base64 to Blob for memory efficiency (bypasses 2MB Data URI limit)
- * - Automatic memory cleanup after 60 seconds
+ * - Opens PDF in the same tab using window.location.replace()
+ * - Converts Base64 to Blob for memory efficiency
+ * - Sample PDFs for quick testing
  * - Error handling with user feedback
  */
 const PdfPreviewer = () => {
@@ -20,7 +20,7 @@ const PdfPreviewer = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   /**
-   * Handles the PDF preview process using the Proxy Tab pattern
+   * Handles the PDF preview process by opening in the same tab
    */
   const handlePreviewReport = async () => {
     // Validate input
@@ -31,64 +31,8 @@ const PdfPreviewer = () => {
 
     setIsProcessing(true);
 
-    // Step 1: Immediately open a new tab (must happen in user-initiated event)
-    const proxyTab = window.open('about:blank', '_blank');
-    
-    if (!proxyTab) {
-      alert('Error: Unable to open new tab. Please check your popup blocker settings.');
-      setIsProcessing(false);
-      return;
-    }
-
-    // Add loading message to proxy tab
-    proxyTab.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Loading PDF...</title>
-          <style>
-            body {
-              margin: 0;
-              padding: 0;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 100vh;
-              font-family: system-ui, -apple-system, sans-serif;
-              background: #f5f5f5;
-            }
-            .loader {
-              text-align: center;
-            }
-            .spinner {
-              border: 4px solid #f3f3f3;
-              border-top: 4px solid #3498db;
-              border-radius: 50%;
-              width: 40px;
-              height: 40px;
-              animation: spin 1s linear infinite;
-              margin: 0 auto 20px;
-            }
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="loader">
-            <div class="spinner"></div>
-            <p>Loading PDF Report...</p>
-          </div>
-        </body>
-      </html>
-    `);
-
     try {
-      // Step 2: Simulate API delay (1 second)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Step 3: Process the Base64 string
+      // Process the Base64 string
       let base64Data = base64Input.trim();
 
       // Strip Data URI prefix if present
@@ -108,70 +52,31 @@ const PdfPreviewer = () => {
         throw new Error('Invalid Base64 format. Please check your input.');
       }
 
-      // Step 4: Convert Base64 to Blob using fetch (2025 best practice)
-      const dataUri = `data:application/pdf;base64,${base64Data}`;
-      const response = await fetch(dataUri);
-      
-      if (!response.ok) {
-        throw new Error('Failed to process PDF data.');
+      // Convert Base64 to binary
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
       }
 
-      const blob = await response.blob();
+      // Create Blob from binary data
+      const blob = new Blob([bytes], { type: 'application/pdf' });
 
       // Verify it's a valid PDF blob
       if (blob.size === 0) {
         throw new Error('Generated PDF is empty. Please check your Base64 data.');
       }
 
-      // Step 5: Create Blob URL
+      // Create Blob URL
       const blobUrl = URL.createObjectURL(blob);
 
-      // Step 6: Render PDF using iframe (better mobile browser compatibility)
-      // Clear the loading content and inject the PDF viewer
-      proxyTab.document.open();
-      proxyTab.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>PDF Preview</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-              }
-              html, body {
-                width: 100%;
-                height: 100%;
-                overflow: hidden;
-              }
-              iframe {
-                width: 100%;
-                height: 100%;
-                border: none;
-              }
-            </style>
-          </head>
-          <body>
-            <iframe src="${blobUrl}" type="application/pdf"></iframe>
-          </body>
-        </html>
-      `);
-      proxyTab.document.close();
+      // Navigate to the PDF in the same tab (preserves history for back button)
+      window.location.href = blobUrl;
 
-      // Step 7: Automatic cleanup after 60 seconds
-      setTimeout(() => {
-        URL.revokeObjectURL(blobUrl);
-        console.log('Blob URL revoked for memory cleanup');
-      }, 60000);
-
-      setIsProcessing(false);
+      // Note: Cleanup will happen when user navigates away or closes the tab
+      // The browser will automatically revoke the blob URL
 
     } catch (error) {
-      // Close proxy tab on error
-      proxyTab.close();
-      
       // Show error message
       alert(`Error: ${error.message}`);
       
