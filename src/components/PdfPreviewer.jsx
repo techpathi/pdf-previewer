@@ -10,12 +10,11 @@ import { ALL_SAMPLES } from '../data/samplePdfs';
  * 
  * Features:
  * - Handles both raw Base64 and Data URI format
- * - Opens PDF in new tab using window.open()
+ * - Opens PDF in new tab using window.open() with the PDF blob URL
  * - Converts Base64 to Blob for memory efficiency
  * - Sample PDFs for quick testing
  * - Error handling with user feedback
  * - Automatic blob URL cleanup to prevent memory leaks
- * - Custom tab titles for better UX
  */
 
 /**
@@ -58,67 +57,25 @@ const convertBase64ToPdfBlob = (base64Data) => {
 };
 
 /**
- * Creates an HTML page that embeds the PDF with a custom title
- * @param {string} pdfBlobUrl - Blob URL of the PDF
- * @param {string} title - Title for the browser tab
- * @returns {string} HTML content as a string
- */
-const createPdfViewerHtml = (pdfBlobUrl, title) => {
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${title}</title>
-      <style>
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        body, html {
-          width: 100%;
-          height: 100%;
-          overflow: hidden;
-        }
-        iframe {
-          width: 100%;
-          height: 100%;
-          border: none;
-        }
-      </style>
-    </head>
-    <body>
-      <iframe src="${pdfBlobUrl}" type="application/pdf"></iframe>
-    </body>
-    </html>
-  `;
-};
-
-/**
- * Opens a PDF blob in a new browser tab with a custom title
+ * Opens a PDF blob in a new browser tab by using the blob URL directly
  * @param {Blob} blob - PDF blob to open
- * @param {string} title - Title for the browser tab (default: "PDF Preview")
  */
-const openPdfInNewTab = (blob, title = 'PDF Preview') => {
+const openPdfInNewTab = (blob) => {
   // Create blob URL for the PDF
   const pdfBlobUrl = URL.createObjectURL(blob);
-  
-  // Create HTML wrapper with custom title
-  const htmlContent = createPdfViewerHtml(pdfBlobUrl, title);
-  const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-  const htmlBlobUrl = URL.createObjectURL(htmlBlob);
-  
-  // Open the HTML page in a new tab
-  window.open(htmlBlobUrl, '_blank');
-  
-  // Cleanup blob URLs after a delay to prevent memory leaks
-  // The delay gives the browser time to load the content
+
+  // Open the PDF blob URL directly in a new tab
+  window.open(pdfBlobUrl, '_blank');
+
+  // Cleanup blob URL after a short delay to prevent memory leaks
+  // Delay gives the browser time to load the PDF from the blob URL
   setTimeout(() => {
-    URL.revokeObjectURL(pdfBlobUrl);
-    URL.revokeObjectURL(htmlBlobUrl);
-  }, 1000);
+    try {
+      URL.revokeObjectURL(pdfBlobUrl);
+    } catch (e) {
+      // ignore revoke errors
+    }
+  }, 2000);
 };
 
 const PdfPreviewer = () => {
@@ -137,7 +94,7 @@ const PdfPreviewer = () => {
 
     try {
       const blob = convertBase64ToPdfBlob(base64Input.trim());
-      openPdfInNewTab(blob, 'PDF Preview');
+      openPdfInNewTab(blob);
     } catch (error) {
       alert(`Error: ${error.message}`);
       console.error('PDF Preview Error:', error);
@@ -150,7 +107,7 @@ const PdfPreviewer = () => {
   const loadSample = (samplePdf) => {
     try {
       const blob = convertBase64ToPdfBlob(samplePdf.base64.trim());
-      openPdfInNewTab(blob, samplePdf.name);
+      openPdfInNewTab(blob);
     } catch (error) {
       alert(`Error: ${error.message}`);
       console.error('PDF Preview Error:', error);
