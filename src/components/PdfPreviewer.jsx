@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './PdfPreviewer.css';
+import { ALL_SAMPLES } from '../data/samplePdfs';
 
 /**
  * PdfPreviewer Component
@@ -125,8 +126,39 @@ const PdfPreviewer = () => {
       // Step 5: Create Blob URL
       const blobUrl = URL.createObjectURL(blob);
 
-      // Step 6: Navigate proxy tab to Blob URL
-      proxyTab.location.href = blobUrl;
+      // Step 6: Render PDF using embed tag (Chrome Android compatible)
+      // Clear the loading content and inject the PDF viewer
+      proxyTab.document.open();
+      proxyTab.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>PDF Preview</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              html, body {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+              }
+              embed {
+                width: 100%;
+                height: 100%;
+                border: none;
+              }
+            </style>
+          </head>
+          <body>
+            <embed src="${blobUrl}" type="application/pdf" />
+          </body>
+        </html>
+      `);
+      proxyTab.document.close();
 
       // Step 7: Automatic cleanup after 60 seconds
       setTimeout(() => {
@@ -148,6 +180,13 @@ const PdfPreviewer = () => {
     }
   };
 
+  /**
+   * Loads a sample PDF into the textarea
+   */
+  const loadSample = (samplePdf) => {
+    setBase64Input(samplePdf.base64);
+  };
+
   return (
     <div className="pdf-previewer">
       <div className="pdf-previewer-header">
@@ -156,6 +195,28 @@ const PdfPreviewer = () => {
       </div>
 
       <div className="pdf-previewer-content">
+        <div className="samples-section">
+          <h3 className="samples-title">📚 Try Sample PDFs</h3>
+          <div className="samples-buttons">
+            {ALL_SAMPLES.map((sample, index) => (
+              <button
+                key={index}
+                className="sample-button"
+                onClick={() => loadSample(sample)}
+                disabled={isProcessing}
+                title={sample.description}
+              >
+                <span className="sample-icon">📄</span>
+                {sample.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="divider">
+          <span>OR</span>
+        </div>
+
         <textarea
           className="base64-input"
           value={base64Input}
@@ -182,16 +243,6 @@ const PdfPreviewer = () => {
             </>
           )}
         </button>
-
-        <div className="info-section">
-          <h3>ℹ️ How it works</h3>
-          <ul>
-            <li><strong>Mobile Optimized:</strong> Uses Blob URLs to bypass the 2MB Data URI limit</li>
-            <li><strong>Popup Safe:</strong> Opens tab immediately to avoid popup blockers</li>
-            <li><strong>Memory Efficient:</strong> Automatically cleans up after 60 seconds</li>
-            <li><strong>Format Flexible:</strong> Accepts both raw Base64 and Data URI formats</li>
-          </ul>
-        </div>
       </div>
     </div>
   );
