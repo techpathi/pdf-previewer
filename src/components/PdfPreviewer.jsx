@@ -65,17 +65,19 @@ const openPdfInNewTab = (blob) => {
   const pdfBlobUrl = URL.createObjectURL(blob);
 
   // Open the PDF blob URL directly in a new tab
-  window.open(pdfBlobUrl, '_blank');
+  const win = window.open(pdfBlobUrl, '_blank');
 
   // Cleanup blob URL after a short delay to prevent memory leaks
   // Delay gives the browser time to load the PDF from the blob URL
-  setTimeout(() => {
-    try {
-      URL.revokeObjectURL(pdfBlobUrl);
-    } catch (e) {
-      // ignore revoke errors
-    }
-  }, 2000);
+  if (win) {
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(pdfBlobUrl);
+      } catch (e) {
+        // ignore revoke errors
+      }
+    }, 2000);
+  }
 };
 
 const PdfPreviewer = () => {
