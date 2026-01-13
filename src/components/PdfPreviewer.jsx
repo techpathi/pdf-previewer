@@ -82,11 +82,25 @@ const openPdfInNewTab = (blob) => {
 
 /**
  * Checks if the current device is mobile or tablet
+ * Uses multiple detection methods for reliability:
+ * 1. Touch capability + coarse pointer + small screen (excludes touchscreen laptops)
+ * 2. User-agent fallback for edge cases
  * @returns {boolean} True if mobile/tablet, false if desktop
  */
 const isMobileOrTablet = () => {
-  return navigator.maxTouchPoints > 0 &&
-    window.matchMedia('(pointer: coarse)').matches;
+  // Primary detection: touch + coarse pointer + screen size limit
+  const hasTouchScreen = navigator.maxTouchPoints > 0;
+  const hasCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  const isSmallScreen = window.matchMedia('(max-width: 1024px)').matches;
+
+  const touchBasedCheck = hasTouchScreen && hasCoarsePointer && isSmallScreen;
+
+  // Fallback: User-agent check for common mobile/tablet patterns
+  const userAgentCheck = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+
+  return touchBasedCheck || userAgentCheck;
 };
 
 const PdfPreviewer = () => {
