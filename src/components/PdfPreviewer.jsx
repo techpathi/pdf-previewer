@@ -80,9 +80,34 @@ const openPdfInNewTab = (blob) => {
   }
 };
 
+/**
+ * Checks if the current device is mobile or tablet
+ * @returns {boolean} True if mobile/tablet, false if desktop
+ */
+const isMobileOrTablet = () => {
+  return navigator.maxTouchPoints > 0 &&
+    window.matchMedia('(pointer: coarse)').matches;
+};
+
 const PdfPreviewer = () => {
   const [base64Input, setBase64Input] = useState('');
   const [isManualInput, setIsManualInput] = useState(false);
+
+  // Check if device is desktop
+  if (!isMobileOrTablet()) {
+    return (
+      <div className="pdf-previewer">
+        <div className="pdf-previewer-content">
+          <div className="desktop-alert">
+            <span className="alert-icon">🖥️</span>
+            <h2>Desktop Device Detected</h2>
+            <p>This application is designed for mobile and tablet devices only.</p>
+            <p>Please access this page from a mobile phone or tablet to use the PDF previewer.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   /**
    * Handles the PDF preview process by opening in a new tab

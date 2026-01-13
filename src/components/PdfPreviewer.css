@@ -270,3 +270,36 @@
     justify-content: center;
   }
 }
+
+/* Desktop Alert */
+.desktop-alert {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border-radius: 16px;
+  border: 2px solid #fc8181;
+}
+
+.desktop-alert .alert-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.desktop-alert h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #c53030;
+  margin: 0 0 1rem 0;
+}
+
+.desktop-alert p {
+  font-size: 1rem;
+  color: #742a2a;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.6;
+}
+
+.desktop-alert p:last-child {
+  margin-bottom: 0;
+}
