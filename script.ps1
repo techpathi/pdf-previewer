@@ -5,8 +5,8 @@ Import-Module PnP.PowerShell
 # =========================
 
 # File paths
-$inputCsv  = "/Users/techpathi/Documents/Input.csv"
-$outputCsv = "/Users/techpathi/Documents/output.csv"
+$inputCsv  = "/Users/username/Documents/Input.csv"
+$outputCsv = "/Users/username/Documents/output.csv"
 $scriptDirectory = if ($PSScriptRoot) {
     $PSScriptRoot
 }
